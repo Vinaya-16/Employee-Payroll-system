@@ -1,0 +1,16 @@
+Sample Data Insertion (for Testing)
+
+-- Insert Departments
+INSERT INTO Departments VALUES (dept_seq.NEXTVAL, 'HR', 'New York');
+INSERT INTO Departments VALUES (dept_seq.NEXTVAL, 'Engineering', 'California');
+
+-- Insert Tax Slabs (example for compliance)
+INSERT INTO Tax_Slabs VALUES (slab_seq.NEXTVAL, 'New York', 0, 50000, 10);
+INSERT INTO Tax_Slabs VALUES (slab_seq.NEXTVAL, 'New York', 50001, 100000, 20);
+INSERT INTO Tax_Slabs VALUES (slab_seq.NEXTVAL, 'California', 0, 60000, 9.3);
+
+-- Insert Employee
+INSERT INTO Employees VALUES (emp_seq.NEXTVAL, 'John Doe', TO_DATE('1990-01-01', 'YYYY-MM-DD'), '123 Main St', 'Engineer', 2, SYSDATE, 80000, 'health,401k', 'Single', 'California');
+
+-- Call Procedure Example
+EXEC Calculate_Salary(1, '2025-10');

@@ -1,0 +1,62 @@
+PL/SQL Procedures
+These automate salary processing and dynamic adjustments.
+-- Procedure to Calculate Salary for an Employee
+CREATE OR REPLACE PROCEDURE Calculate_Salary(p_emp_id IN NUMBER, p_month_year IN VARCHAR2) AS
+    v_gross NUMBER(10,2);
+    v_deductions NUMBER(10,2) := 0;
+    v_bonuses NUMBER(10,2) := 0;  -- Assume logic to fetch bonuses
+    v_overtime_pay NUMBER(10,2);
+    v_net NUMBER(10,2);
+    v_overtime_hours NUMBER(4,2);
+    v_leave_days NUMBER := 0;
+    v_tax_rate NUMBER(4,2);
+    v_location VARCHAR2(50);
+BEGIN
+    -- Fetch base data
+    SELECT base_salary, location INTO v_gross, v_location FROM Employees WHERE emp_id = p_emp_id;
+    
+    -- Calculate overtime
+    SELECT SUM(overtime_hours) INTO v_overtime_hours 
+    FROM Attendance WHERE emp_id = p_emp_id AND TO_CHAR(att_date, 'YYYY-MM') = p_month_year;
+    v_overtime_pay := v_overtime_hours * (v_gross / 160);  -- Assume 160 working hours/month, adjust rate as needed
+    
+    -- Calculate leave deductions (e.g., unpaid leaves)
+    SELECT COUNT(*) INTO v_leave_days 
+    FROM Leaves WHERE emp_id = p_emp_id AND status = 'Approved' AND leave_type = 'Unpaid'
+    AND TO_CHAR(start_date, 'YYYY-MM') = p_month_year;  -- Simplified; adjust for partial days
+    v_deductions := v_deductions + (v_leave_days * (v_gross / 30));  -- Daily rate
+    
+    -- PF deduction (assume 12%)
+    v_deductions := v_deductions + (v_gross * 0.12);
+    
+    -- Tax deduction based on location and slabs
+    SELECT tax_rate INTO v_tax_rate 
+    FROM Tax_Slabs 
+    WHERE location = v_location AND v_gross BETWEEN min_income AND max_income;
+    v_deductions := v_deductions + (v_gross * (v_tax_rate / 100));
+    
+    -- Net calculation
+    v_net := v_gross + v_overtime_pay + v_bonuses - v_deductions;
+    
+    -- Insert into Salaries
+    INSERT INTO Salaries (sal_id, emp_id, month_year, gross_salary, deductions, bonuses, overtime_pay, net_salary)
+    VALUES (sal_seq.NEXTVAL, p_emp_id, p_month_year, v_gross, v_deductions, v_bonuses, v_overtime_pay, v_net);
+    
+    COMMIT;
+END;
+/
+
+-- Procedure for Dynamic Pay Adjustment (called during policy changes)
+CREATE OR REPLACE PROCEDURE Adjust_Pay_Slabs(p_location IN VARCHAR2, p_new_rate_multiplier IN NUMBER) AS
+BEGIN
+    UPDATE Tax_Slabs 
+    SET tax_rate = tax_rate * p_new_rate_multiplier 
+    WHERE location = p_location;
+    
+    -- Log the change
+    INSERT INTO Audit_Logs (log_id, table_name, operation, old_value, new_value, changed_by)
+    VALUES (log_seq.NEXTVAL, 'Tax_Slabs', 'UPDATE', 'Old rates', 'New rates applied', USER);
+    
+    COMMIT;
+END;
+/

@@ -2,85 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Payroll Access</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Employee Payroll System</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-
-    <div class="app-container">
-        <h1>Payroll Portal</h1>
-
-        <div id="loginScreen" class="card active">
-    <h2><i class="fas fa-lock"></i> Employee ID Access</h2> <div class="input-group">
-        <label for="loginID">Employee ID:</label>
-        <input type="text" id="loginID" placeholder="e.g., EMP001" required>
-    </div>
-    <button onclick="validateAndGrantAccess()" class="primary-btn">Access Dashboard</button> <p class="disclaimer">Use EMP001, EMP002, or EMP003 to test.</p>
-</div>
-        <!-- <div id="loginScreen" class="card active">
-            <h2><i class="fas fa-lock"></i> Employee Login</h2>
-            <div class="input-group">
-                <label for="loginID">Employee ID:</label>
-                <input type="text" id="loginID" placeholder="e.g., EMP001" required>
-            </div>
-            <button onclick="handleLogin()" class="primary-btn">Log In</button>
-            <p class="disclaimer">Use EMP001, EMP002, or EMP003 to test.</p>
-        </div> -->
-
-        <div id="dashboard" class="card hidden">
-            <h2 id="welcomeMsg">Welcome, Employee!</h2>
-            <div class="data-entry-grid">
-                <div class="input-group">
-                    <label for="bonusAmount"><i class="fas fa-gift"></i> This Month's Bonus ($):</label>
-                    <input type="number" id="bonusAmount" min="0" value="0">
-                </div>
-                <div class="input-group">
-                    <label for="holidaysTaken"><i class="fas fa-calendar-alt"></i> Holidays Taken (Days):</label>
-                    <input type="number" id="holidaysTaken" min="0" value="0">
-                </div>
-                <div class="input-group">
-                    <label for="lastPayment"><i class="fas fa-money-bill-wave"></i> Last Month's Net Pay ($):</label>
-                    <input type="number" id="lastPayment" min="0" value="3500">
-                </div>
-                <button onclick="calculateSalary()" class="primary-btn grid-span">Calculate Salary & Receipt</button>
-            </div>
-
-            <hr>
-
-            <div id="receiptSection" class="receipt-card hidden">
-                <h3><i class="fas fa-receipt"></i> Salary Receipt Summary</h3>
-                <div class="receipt-meta">
-                    <p>Employee: <strong id="receiptName"></strong></p>
-                    <p>ID: <strong id="receiptID"></strong></p>
-                </div>
-                
-                <div class="receipt-details">
-                    <div class="detail-item base">
-                        <label>Base Salary (Est.):</label>
-                        <span id="baseSalary">$0.00</span>
-                    </div>
-                    <div class="detail-item adjustment bonus">
-                        <label>Bonus Added:</label>
-                        <span id="bonusAdded">$0.00</span>
-                    </div>
-                    <div class="detail-item adjustment deduction">
-                        <label>Holiday Deduction (0.5x Base/Day):</label>
-                        <span id="holidayDeduction">$0.00</span>
-                    </div>
-                    <hr>
-                    <div class="detail-item net">
-                        <label>Total Net Pay:</label>
-                        <strong id="finalSalary">$0.00</strong>
-                    </div>
-                    <p class="paid-status"><i class="fas fa-check-circle"></i> This amount has been processed.</p>
-                </div>
-            </div>
-        </div>
+    <div class="container mt-5">
+        <h1>Employee Payroll Dashboard</h1>
+        
+        <!-- Employee List -->
+        <h2>Employees</h2>
+        <table class="table table-striped" id="empTable">
+            <thead><tr><th>ID</th><th>Name</th><th>Salary</th><th>Location</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        
+        <!-- Process Salary Form -->
+        <h2>Process Salary</h2>
+        <form id="salaryForm">
+            <input type="number" id="empId" placeholder="Employee ID" required>
+            <input type="text" id="monthYear" placeholder="YYYY-MM" required>
+            <button type="submit" class="btn btn-primary">Calculate</button>
+        </form>
+        
+        <!-- Notifications -->
+        <h2>Pending Notifications (Anomalies)</h2>
+        <ul id="notifList" class="list-group"></ul>
+        
+        <!-- Audit Logs -->
+        <h2>Audit Logs</h2>
+        <table class="table table-striped" id="auditTable">
+            <thead><tr><th>ID</th><th>Table</th><th>Operation</th><th>Old Value</th><th>New Value</th><th>Date</th></tr></thead>
+            <tbody></tbody>
+        </table>
     </div>
 
-    <script src="index.js"></script>
+    <script>
+        // Fetch Employees
+        fetch('/employees').then(res => res.json()).then(data => {
+            const tbody = document.querySelector('#empTable tbody');
+            data.forEach(row => {
+                tbody.innerHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[7]}</td><td>${row[10]}</td></tr>`;
+            });
+        });
+
+        // Process Salary
+        document.getElementById('salaryForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const empId = document.getElementById('empId').value;
+            const monthYear = document.getElementById('monthYear').value;
+            fetch('/calculate-salary', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({emp_id: parseInt(empId), month_year})
+            }).then(() => alert('Salary processed!'));
+        });
+
+        // Fetch Notifications
+        fetch('/notifications').then(res => res.json()).then(data => {
+            const list = document.getElementById('notifList');
+            data.forEach(row => {
+                list.innerHTML += `<li class="list-group-item">Emp ID: ${row[1]} - ${row[2]} (Date: ${row[3]})</li>`;
+            });
+        });
+
+        // Fetch Audit Logs
+        fetch('/audit-logs').then(res => res.json()).then(data => {
+            const tbody = document.querySelector('#auditTable tbody');
+            data.forEach(row => {
+                tbody.innerHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td></tr>`;
+            });
+        });
+    </script>
 </body>
 </html>

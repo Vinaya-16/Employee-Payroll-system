@@ -1,0 +1,59 @@
+Triggers for Anomaly Detection and Notifications
+These implement the unique "Dynamic Pay Revision & Anomaly Detection Module".
+
+-- Trigger on Attendance for Overtime Anomaly
+CREATE OR REPLACE TRIGGER Attendance_Anomaly_Trg
+AFTER INSERT OR UPDATE ON Attendance
+FOR EACH ROW
+DECLARE
+    v_threshold NUMBER := 20;  -- e.g., max overtime hours per month without approval
+    v_month_total NUMBER;
+BEGIN
+    -- Calculate monthly overtime
+    SELECT SUM(overtime_hours) INTO v_month_total 
+    FROM Attendance WHERE emp_id = :NEW.emp_id AND TO_CHAR(att_date, 'YYYY-MM') = TO_CHAR(:NEW.att_date, 'YYYY-MM');
+    
+    IF v_month_total > v_threshold THEN
+        INSERT INTO Notifications (notif_id, emp_id, message, created_date)
+        VALUES (notif_seq.NEXTVAL, :NEW.emp_id, 'Anomaly: Overtime exceeds threshold - Review required', SYSDATE);
+    END IF;
+END;
+/
+
+-- Trigger on Salaries for Salary Variation Anomaly
+CREATE OR REPLACE TRIGGER Salary_Anomaly_Trg
+BEFORE INSERT ON Salaries
+FOR EACH ROW
+DECLARE
+    v_prev_net NUMBER;
+    v_threshold_pct NUMBER := 15;  -- e.g., 15% variation triggers notification
+BEGIN
+    -- Fetch previous month's net (if exists)
+    SELECT net_salary INTO v_prev_net 
+    FROM Salaries WHERE emp_id = :NEW.emp_id AND month_year = TO_CHAR(ADD_MONTHS(TO_DATE(:NEW.month_year || '-01', 'YYYY-MM-DD'), -1), 'YYYY-MM')
+    FOR UPDATE;  -- Simplified; handle no data found
+    
+    IF ABS((:NEW.net_salary - v_prev_net) / v_prev_net * 100) > v_threshold_pct THEN
+        INSERT INTO Notifications (notif_id, emp_id, message, created_date)
+        VALUES (notif_seq.NEXTVAL, :NEW.emp_id, 'Anomaly: Salary variation exceeds threshold - Approval needed', SYSDATE);
+        
+        -- Optionally halt insert until approval (but for now, just notify)
+    END IF;
+    
+    -- Audit log
+    INSERT INTO Audit_Logs (log_id, table_name, operation, old_value, new_value, changed_by)
+    VALUES (log_seq.NEXTVAL, 'Salaries', 'INSERT', NULL, TO_CHAR(:NEW.net_salary), USER);
+END;
+/
+
+-- Trigger for Audit on Employee Updates
+CREATE OR REPLACE TRIGGER Employee_Audit_Trg
+AFTER UPDATE ON Employees
+FOR EACH ROW
+BEGIN
+    IF :OLD.base_salary <> :NEW.base_salary THEN
+        INSERT INTO Audit_Logs (log_id, table_name, operation, old_value, new_value, changed_by)
+        VALUES (log_seq.NEXTVAL, 'Employees', 'UPDATE', TO_CHAR(:OLD.base_salary), TO_CHAR(:NEW.base_salary), USER);
+    END IF;
+END;
+/

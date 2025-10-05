@@ -1,0 +1,92 @@
+Create Tables
+-- Employees Table
+-- CREATE TABLE Employees (
+--     emp_id NUMBER PRIMARY KEY,
+--     name VARCHAR2(100) NOT NULL,
+--     dob DATE,
+--     address VARCHAR2(255),
+--     job_role VARCHAR2(50),
+--     dept_id NUMBER,
+--     hire_date DATE,
+--     base_salary NUMBER(10,2),
+--     benefits VARCHAR2(255),  -- e.g., JSON or comma-separated: "health,retirement"
+--     tax_category VARCHAR2(20),  -- e.g., 'Single', 'Married'
+--     location VARCHAR2(50)  -- For regional compliance
+-- );
+
+-- Departments Table
+-- CREATE TABLE Departments (
+--     dept_id NUMBER PRIMARY KEY,
+--     name VARCHAR2(50),
+--     location VARCHAR2(50)
+-- );
+
+-- Attendance Table (for real-time tracking)
+-- CREATE TABLE Attendance (
+--     att_id NUMBER PRIMARY KEY,
+--     emp_id NUMBER REFERENCES Employees(emp_id),
+--     att_date DATE,
+--     status VARCHAR2(20),  -- 'Present', 'Absent', 'Leave'
+--     overtime_hours NUMBER(4,2) DEFAULT 0
+-- );
+
+-- Leaves Table
+-- CREATE TABLE Leaves (
+--     leave_id NUMBER PRIMARY KEY,
+--     emp_id NUMBER REFERENCES Employees(emp_id),
+--     leave_type VARCHAR2(20),  -- 'Sick', 'Vacation', etc.
+--     start_date DATE,
+--     end_date DATE,
+--     status VARCHAR2(20) DEFAULT 'Pending'  -- 'Approved', 'Rejected'
+-- );
+
+-- Tax Slabs Table (for compliance, per location)
+-- CREATE TABLE Tax_Slabs (
+--     slab_id NUMBER PRIMARY KEY,
+--     location VARCHAR2(50),
+--     min_income NUMBER(10,2),
+--     max_income NUMBER(10,2),
+--     tax_rate NUMBER(4,2)  -- Percentage, e.g., 10.00
+-- );
+
+-- Salaries Table (processed monthly)
+-- CREATE TABLE Salaries (
+--     sal_id NUMBER PRIMARY KEY,
+--     emp_id NUMBER REFERENCES Employees(emp_id),
+--     month_year VARCHAR2(7),  -- e.g., '2025-10'
+--     gross_salary NUMBER(10,2),
+--     deductions NUMBER(10,2),  -- PF, tax, leaves
+--     bonuses NUMBER(10,2),
+--     overtime_pay NUMBER(10,2),
+--     net_salary NUMBER(10,2)
+-- );
+
+-- Notifications Table (for anomalies and approvals)
+-- CREATE TABLE Notifications (
+--     notif_id NUMBER PRIMARY KEY,
+--     emp_id NUMBER REFERENCES Employees(emp_id),
+--     message VARCHAR2(255),
+--     created_date DATE DEFAULT SYSDATE,
+--     status VARCHAR2(20) DEFAULT 'Pending'  -- 'Reviewed', 'Approved'
+-- );
+
+-- Audit Logs Table (for tracking changes)
+-- CREATE TABLE Audit_Logs (
+--     log_id NUMBER PRIMARY KEY,
+--     table_name VARCHAR2(50),
+--     operation VARCHAR2(10),  -- 'INSERT', 'UPDATE', 'DELETE'
+--     old_value VARCHAR2(4000),
+--     new_value VARCHAR2(4000),
+--     changed_by VARCHAR2(50),
+--     change_date DATE DEFAULT SYSDATE
+-- );
+
+-- Sequences for auto-incrementing IDs
+CREATE SEQUENCE emp_seq START WITH 1;
+CREATE SEQUENCE dept_seq START WITH 1;
+CREATE SEQUENCE att_seq START WITH 1;
+CREATE SEQUENCE leave_seq START WITH 1;
+CREATE SEQUENCE slab_seq START WITH 1;
+CREATE SEQUENCE sal_seq START WITH 1;
+CREATE SEQUENCE notif_seq START WITH 1;
+CREATE SEQUENCE log_seq START WITH 1;
