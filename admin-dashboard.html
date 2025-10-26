@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <h1>Salary Administrator Dashboard</h1>
+            <div class="user-info" id="userInfo"></div>
+        </div>
+
+        <div class="table-container">
+            <h3>Employee Salary Management</h3>
+            <table id="salaryTable">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Base Salary</th>
+                        <th>Bonus</th>
+                        <th>Deductions</th>
+                        <th>Final Salary</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="salaryTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser || currentUser.username !== 'admin') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('userInfo').innerHTML = `
+                <strong>Administrator:</strong> ${currentUser.name}
+            `;
+
+            displaySalaryData();
+        });
+
+        function displaySalaryData() {
+            const tableBody = document.getElementById('salaryTableBody');
+            
+            tableBody.innerHTML = employees.map(employee => {
+                const salary = salaryData[employee.id];
+                return `
+                    <tr>
+                        <td>${employee.id}</td>
+                        <td>${employee.name}</td>
+                        <td>Rs. ${employee.baseSalary}</td>
+                        <td>
+                            <input type="number" id="bonus-${employee.id}" value="${salary ? salary.bonus : 0}" 
+                                   style="width: 80px;" onchange="updateSalary(${employee.id})">
+                        </td>
+                        <td>
+                            <input type="number" id="deductions-${employee.id}" value="${salary ? salary.deductions : 0}" 
+                                   style="width: 80px;" onchange="updateSalary(${employee.id})">
+                        </td>
+                        <td id="final-${employee.id}">
+                            Rs. ${salary ? salary.finalSalary : employee.baseSalary}
+                        </td>
+                        <td id="status-${employee.id}">
+                            ${salary ? salary.status : 'Pending'}
+                        </td>
+                        <td>
+                            <button class="action-btn save-btn" onclick="approveSalary(${employee.id})">
+                                Approve
+                            </button>
+                            <button class="action-btn edit-btn" onclick="editSalary(${employee.id})">
+                                Edit
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateSalary(employeeId) {
+            const bonus = parseInt(document.getElementById(`bonus-${employeeId}`).value) || 0;
+            const deductions = parseInt(document.getElementById(`deductions-${employeeId}`).value) || 0;
+            const baseSalary = employees.find(emp => emp.id === employeeId).baseSalary;
+            const finalSalary = baseSalary + bonus - deductions;
+
+            document.getElementById(`final-${employeeId}`).textContent = `Rs. ${finalSalary}`;
+            
+            // Update salary data
+            if (!salaryData[employeeId]) {
+                salaryData[employeeId] = {};
+            }
+            salaryData[employeeId].bonus = bonus;
+            salaryData[employeeId].deductions = deductions;
+            salaryData[employeeId].finalSalary = finalSalary;
+        }
+
+        function approveSalary(employeeId) {
+            if (salaryData[employeeId]) {
+                salaryData[employeeId].status = 'Approved';
+                document.getElementById(`status-${employeeId}`).textContent = 'Approved';
+                alert(`Salary approved for Employee ID: ${employeeId}`);
+            }
+        }
+
+        function editSalary(employeeId) {
+            // Enable editing of bonus and deductions
+            const bonusInput = document.getElementById(`bonus-${employeeId}`);
+            const deductionsInput = document.getElementById(`deductions-${employeeId}`);
+            
+            bonusInput.disabled = false;
+            deductionsInput.disabled = false;
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

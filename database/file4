@@ -13,4 +13,7 @@ INSERT INTO Tax_Slabs VALUES (slab_seq.NEXTVAL, 'California', 0, 60000, 9.3);
 INSERT INTO Employees VALUES (emp_seq.NEXTVAL, 'John Doe', TO_DATE('1990-01-01', 'YYYY-MM-DD'), '123 Main St', 'Engineer', 2, SYSDATE, 80000, 'health,401k', 'Single', 'California');
 
 -- Call Procedure Example
-EXEC Calculate_Salary(1, '2025-10');
+BEGIN
+    Calculate_Salary(1, '2025-10');
+END;
+/

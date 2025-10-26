@@ -1,5 +1,5 @@
-Triggers for Anomaly Detection and Notifications
-These implement the unique "Dynamic Pay Revision & Anomaly Detection Module".
+-- Triggers for Anomaly Detection and Notifications
+-- These implement the unique "Dynamic Pay Revision & Anomaly Detection Module".
 
 -- Trigger on Attendance for Overtime Anomaly
 CREATE OR REPLACE TRIGGER Attendance_Anomaly_Trg

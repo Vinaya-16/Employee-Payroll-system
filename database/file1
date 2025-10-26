@@ -14,14 +14,14 @@ CREATE TABLE Employees (
     location VARCHAR2(50)  -- For regional compliance
 );
 
-Departments Table
+-- Departments Table
 CREATE TABLE Departments (
     dept_id NUMBER PRIMARY KEY,
     name VARCHAR2(50),
     location VARCHAR2(50)
 );
 
-Attendance Table (for real-time tracking)
+-- Attendance Table (for real-time tracking)
 CREATE TABLE Attendance (
     att_id NUMBER PRIMARY KEY,
     emp_id NUMBER REFERENCES Employees(emp_id),
@@ -81,7 +81,7 @@ CREATE TABLE Audit_Logs (
     change_date DATE DEFAULT SYSDATE
 );
 
--- Sequences for auto-incrementing IDs
+-- -- Sequences for auto-incrementing IDs
 CREATE SEQUENCE emp_seq START WITH 1;
 CREATE SEQUENCE dept_seq START WITH 1;
 CREATE SEQUENCE att_seq START WITH 1;

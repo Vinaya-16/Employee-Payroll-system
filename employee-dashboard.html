@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <h1>Employee Dashboard</h1>
+            <div class="user-info" id="userInfo"></div>
+        </div>
+
+        <div class="summary-card">
+            <h3>Monthly Attendance Summary</h3>
+            <div id="attendanceSummary"></div>
+        </div>
+
+        <div class="table-container">
+            <h3>Daily Attendance Record</h3>
+            <table id="attendanceTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Check-In Time</th>
+                        <th>Check-Out Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary-card">
+            <h3>Salary Information</h3>
+            <div id="salaryInfo"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        // Load employee data
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('userInfo').innerHTML = `
+                <strong>Employee Name:</strong> ${currentUser.name}<br>
+                <strong>Employee ID:</strong> ${currentUser.id}
+            `;
+
+            // Display attendance data
+            const employeeAttendance = attendanceData[currentUser.id] || [];
+            displayAttendanceData(employeeAttendance);
+            
+            // Display salary information
+            displaySalaryInfo(currentUser.id);
+        });
+
+        function displayAttendanceData(attendanceRecords) {
+            const tableBody = document.getElementById('attendanceTableBody');
+            const summaryDiv = document.getElementById('attendanceSummary');
+            
+            if (attendanceRecords.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4">No attendance records found</td></tr>';
+                summaryDiv.innerHTML = 'No attendance data available';
+                return;
+            }
+
+            // Populate table
+            tableBody.innerHTML = attendanceRecords.map(record => `
+                <tr>
+                    <td>${record.date}</td>
+                    <td>${record.checkIn}</td>
+                    <td>${record.checkOut}</td>
+                    <td>${record.status}</td>
+                </tr>
+            `).join('');
+
+            // Calculate summary
+            const presentDays = attendanceRecords.filter(record => record.status === 'Present').length;
+            const totalDays = attendanceRecords.length;
+            const attendancePercentage = ((presentDays / totalDays) * 100).toFixed(2);
+
+            summaryDiv.innerHTML = `
+                <p><strong>Total Days Recorded:</strong> ${totalDays}</p>
+                <p><strong>Present Days:</strong> ${presentDays}</p>
+                <p><strong>Attendance Percentage:</strong> ${attendancePercentage}%</p>
+            `;
+        }
+
+        function displaySalaryInfo(employeeId) {
+            const salaryInfo = salaryData[employeeId];
+            const salaryDiv = document.getElementById('salaryInfo');
+            
+            if (salaryInfo) {
+                salaryDiv.innerHTML = `
+                    <p><strong>Base Salary:</strong> Rs. ${salaryInfo.baseSalary}</p>
+                    <p><strong>Bonus:</strong> Rs. ${salaryInfo.bonus}</p>
+                    <p><strong>Deductions:</strong> Rs. ${salaryInfo.deductions}</p>
+                    <p><strong>Final Salary:</strong> Rs. ${salaryInfo.finalSalary}</p>
+                    <p><strong>Status:</strong> ${salaryInfo.status}</p>
+                `;
+            } else {
+                salaryDiv.innerHTML = '<p>Salary information not available</p>';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

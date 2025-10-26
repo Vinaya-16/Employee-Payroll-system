@@ -1,6 +1,6 @@
-PL/SQL Procedures
-These automate salary processing and dynamic adjustments.
--- Procedure to Calculate Salary for an Employee
+-- PL/SQL Procedures
+-- These automate salary processing and dynamic adjustments.
+-- -- Procedure to Calculate Salary for an Employee
 CREATE OR REPLACE PROCEDURE Calculate_Salary(p_emp_id IN NUMBER, p_month_year IN VARCHAR2) AS
     v_gross NUMBER(10,2);
     v_deductions NUMBER(10,2) := 0;
@@ -15,24 +15,31 @@ BEGIN
     -- Fetch base data
     SELECT base_salary, location INTO v_gross, v_location FROM Employees WHERE emp_id = p_emp_id;
     
-    -- Calculate overtime
-    SELECT SUM(overtime_hours) INTO v_overtime_hours 
-    FROM Attendance WHERE emp_id = p_emp_id AND TO_CHAR(att_date, 'YYYY-MM') = p_month_year;
-    v_overtime_pay := v_overtime_hours * (v_gross / 160);  -- Assume 160 working hours/month, adjust rate as needed
+    -- Calculate overtime (FIXED WITH NVL)
+    SELECT NVL(SUM(overtime_hours), 0) INTO v_overtime_hours
+    FROM Attendance 
+    WHERE emp_id = p_emp_id AND TO_CHAR(att_date, 'YYYY-MM') = p_month_year;
     
-    -- Calculate leave deductions (e.g., unpaid leaves)
+    v_overtime_pay := v_overtime_hours * (v_gross / 160);
+    
+    -- Calculate leave deductions
     SELECT COUNT(*) INTO v_leave_days 
-    FROM Leaves WHERE emp_id = p_emp_id AND status = 'Approved' AND leave_type = 'Unpaid'
-    AND TO_CHAR(start_date, 'YYYY-MM') = p_month_year;  -- Simplified; adjust for partial days
-    v_deductions := v_deductions + (v_leave_days * (v_gross / 30));  -- Daily rate
+    FROM Leaves 
+    WHERE emp_id = p_emp_id 
+    AND status = 'Approved' 
+    AND leave_type = 'Unpaid'
+    AND TO_CHAR(start_date, 'YYYY-MM') = p_month_year;
+
+    v_deductions := v_deductions + (v_leave_days * (v_gross / 30));
     
-    -- PF deduction (assume 12%)
+    -- PF deduction (12%)
     v_deductions := v_deductions + (v_gross * 0.12);
     
-    -- Tax deduction based on location and slabs
+    -- Tax deduction (will work after adding missing slab)
     SELECT tax_rate INTO v_tax_rate 
     FROM Tax_Slabs 
     WHERE location = v_location AND v_gross BETWEEN min_income AND max_income;
+
     v_deductions := v_deductions + (v_gross * (v_tax_rate / 100));
     
     -- Net calculation
@@ -45,6 +52,7 @@ BEGIN
     COMMIT;
 END;
 /
+
 
 -- Procedure for Dynamic Pay Adjustment (called during policy changes)
 CREATE OR REPLACE PROCEDURE Adjust_Pay_Slabs(p_location IN VARCHAR2, p_new_rate_multiplier IN NUMBER) AS
